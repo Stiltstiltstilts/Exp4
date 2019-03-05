@@ -1,4 +1,4 @@
-# Congruency_Music_Language
+# Algebraic_beats
 Written in February/March 2019, this experiment is part of my (Courtney Hilton) PhD
 
 Experiment.py - is the main experiment file
