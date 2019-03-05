@@ -1,0 +1,12 @@
+h * s + j * p
+v * p + t * m
+y * a + e * c
+m * g + l * q
+b * k + x * r
+d * v + k * h
+w * o + i * c
+t * w + h * q
+g * n + m * b
+f * k + r * d
+s * w + q * o
+f * n + j * m

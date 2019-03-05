@@ -1,0 +1,2 @@
+Session	Participant	Handedness	Gender	Native_language	Age	frameRate	
+001	001					59.91469441277633

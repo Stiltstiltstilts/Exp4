@@ -1,0 +1,3 @@
+Trial	Beat	Sentence	Sentence_extraction	Congruency	Validity	Sensitivity	Probe	Response	Accuracy	RTtrial_type
+1	binary	['y', '*', 'p', '*', 't', '+', 'a']	**+	incongruent	False	assorted	a * p * t + y	n	1	1.5839632829884067	main
+2	binary	['g', '*', 'z', '+', 'a', '*', 'v']	*+*	incongruent	False	insensitive	c * g + v * z	n	1	1.5535016659996472	catch
