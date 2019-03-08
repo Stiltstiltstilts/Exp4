@@ -11,9 +11,9 @@ from psychopy import sound
 from numpy.random import random, randint, normal, shuffle
 from psychopy.constants import (NOT_STARTED, STARTED, PLAYING, PAUSED,
                                 STOPPED, FINISHED, PRESSED, RELEASED, FOREVER)
+import pygame.midi
 import os
 import sys
-#import itertools
 import numpy as np
 from constants import *
 from customFunctions import trialCreator
@@ -31,7 +31,7 @@ os.chdir(_thisDir)
 ####### Collect experiment session info ########
 ################################################
 # Exp name
-expName = 'AlgebraicBeats'
+expName = 'Algebraic Beats'
 # Define experiment info
 expInfo = {'session':'001', 'participant':'001',
     'handedness':'', 'gender':'', 'native language': '', 'age': ''}
@@ -105,15 +105,17 @@ with open('data/{}participant_info.txt'.format(expInfo['participant']), 'w') as 
 ################################################
 
 # Main sentences
-conditions = [ptp_cong, ptp_incong, ptp_cong2, ptp_incong2, ptp_neut,
-                   tpt_cong, tpt_incong, tpt_cong2, tpt_incong2, tpt_neut,
-                   ttp_cong, ttp_incong, ttp_cong2, ttp_incong2,]
-catch_conditions = [cat_ptp_cong, cat_ptp_incong, cat_ptp_cong2, cat_ptp_incong2, cat_ptp_neut,
-                cat_tpt_cong, cat_tpt_incong, cat_tpt_cong2, cat_tpt_incong2, cat_tpt_neut,]                   
+conditions = [ptp_cong, ptp_incong, ptp_cong2, ptp_incong2,
+              tpt_cong, tpt_incong, tpt_cong2, tpt_incong2,
+              ppp_cong, ppp_incong, ppp_cong2, ppp_incong2,]
+
+catch_conditions = [cat_ptp_cong, cat_ptp_incong, cat_ptp_cong2, cat_ptp_incong2,
+                    cat_tpt_cong, cat_tpt_incong, cat_tpt_cong2, cat_tpt_incong2, 
+                    cat_ppp_cong, cat_ppp_incong, cat_ppp_cong2, cat_ppp_incong2,]                   
 
 # Combining main and assorted trials into one list
 trials = trialCreator(conditions)
-catch_trials = trialCreator(catch_conditions, num_to_keep=40)
+catch_trials = trialCreator(catch_conditions)
 trials = trials + catch_trials
 shuffle(trials)
 shuffle(trials)
@@ -135,6 +137,7 @@ try:
     introText = visual.TextStim(win, pos=[0,0], color=FGC, text="Placeholder")
     probe_text = visual.TextStim(win, pos=[0,0], color=FGC, height = 2, alignHoriz='center', name='top_probe', text="placeholder")
     break_text = visual.TextStim(win, pos=[0,0], color=FGC, text="Have a break and stretch for 15 seconds!")
+    trial_text = visual.TextStim(win, pos=[0,0], color=FGC, text="Placeholer")
     word_stim_list = []
     for i in range(8): # setting up text_stimuli objects... 15 is the most words in the sent_stims
             exec( '{} = visual.TextStim(win, pos=[0,0], color=FGC, height = 2, text="placeholder")'.format('word' + '_' + str(i+1)) ) # create text objects
@@ -148,14 +151,18 @@ try:
                              tickHeight=-1)
     response_keys = visual.TextStim(win, pos=[0,-5], height = .5, color=FGC, text="respond:'y' 'n' or 'd'")
 
+    pygame.midi.init() # initialising midi
+
     # ==== OTHER TRIAL VARIABLES ==== #
     clock = core.Clock()
     trial_num = 0
 
-    win.mouseVisible = False
+    
     ################################################
     ############## START EXPERIMENT ################
     ################################################
+
+    win.mouseVisible = False
 
     # ===== INSTRUCTIONS 1 ====== #
     counter = 0
@@ -185,25 +192,42 @@ try:
     with open('data/{}trial_log.txt'.format(expInfo['participant']), 'w') as log_file:
         log_file.write('Trial\t' + 
                        'Beat\t' + 
-                       'Sentence\t' + 
-                       'Sentence_extraction\t' + 
+                       'Equation\t' + 
+                       'Structure\t' + 
                        'Congruency\t' + 
                        'Validity\t' +
                        'Sensitivity\t' +      
                        'Probe\t' + 
                        'Response\t' + 
                        'Accuracy\t' + 
-                       'RT' + 
+                       'RT\t' + 
                        'trial_type' + '\n')
+    log_file.close()
+
+    # File for tapping info in main trials
+    with open('data/{}tapping_log.txt'.format(expInfo['participant']), 'w') as tap_file:
+        tap_file.write('Trial\t' + 
+                        'Beat\t' +
+                        'Equation\t' +    
+                        'Congruency\t' +
+                        'Structure\t' +
+                        'Accuracy\t' +
+                        'button\t' +
+                        'timestamp' + '\n')
+    tap_file.close()
+
         trial_num = 0
 
         # ===== TRIALS ====== #
         for thisTrial in all_trials:  
+            drum_pad = pygame.midi.Input(pygame.midi.get_default_input_id())
             trial_num += 1
-            if trial_num % 50 == 0:
+
+            # Check for break trial
+            if trial_num % break_frequency == 0:
                 break_text.draw()
                 win.flip()
-                core.wait(15)
+                core.wait(break_duration)
 
                 ####====Space to continue====####
                 event.clearEvents(eventType='keyboard')
@@ -248,7 +272,7 @@ try:
                 elif (beat_type == 'binary2' and congruency == 'incongruent'):
                     beat_stim   = binary2_beat
                     word_offset = 12 * beat_freq
-            elif structure == '**+':
+            elif structure == '+++':
                 if (beat_type == 'binary2' and congruency == 'congruent'):
                     beat_stim   = binary2_beat
                     word_offset = 10 * beat_freq
@@ -272,10 +296,17 @@ try:
             for thisComponent in trialComponents:
                 if hasattr(thisComponent, 'status'):
                     thisComponent.status = NOT_STARTED
+
+            # display trial structure
+            trial_text.setText(structure)
+            trial_text.draw()
+            win.flip()
+            core.wait(.5)
+
             t = 0
-            trialClock.reset()  # clock
             frameN = -1
             beatDuration = len(stim)*beat_freq + word_offset
+            trialClock.reset()  # clock
 
             ####====START MAIN TRIAL ROUTINE====####
             while continueRoutine: 
@@ -287,12 +318,17 @@ try:
                     # keep track of start time/frame for later
                     beat_stim.tStart = t
                     beat_stim.frameNStart = frameN  # exact frame index
+                    start_time = pygame.midi.time() # keep track of sound start time to adjust taps later
                     beat_stim.play()  # start the sound (it finishes automatically)
                     fixation.setAutoDraw(True)
                 if beat_stim.status == STARTED and t >= beatDuration:
                     beat_stim.stop()
 
-                ##### 2.  iterate through sentence text stimuli #####   
+                ##### 2. check for midi input  #####
+                if drum_pad.poll():
+                    tap_data.append(drum_pad.read(1))
+
+                ##### 3.  iterate through sentence text stimuli #####   
                 for word_index in range(len(stim)):
                     if t >= word_index * beat_freq + word_offset and word_stim_list[word_index].status == NOT_STARTED:
                         fixation.setAutoDraw(False)
@@ -304,7 +340,7 @@ try:
                     if word_stim_list[word_index].status == STARTED and t >= frameRemains:
                         word_stim_list[word_index].setAutoDraw(False)
 
-                ##### 3.  check if all components have finished #####
+                ##### 4.  check if all components have finished #####
                 if not continueRoutine:  # a component has requested a forced-end of Routine
                     break
                 continueRoutine = False  # will revert to True if at least one component still running
@@ -313,7 +349,7 @@ try:
                         continueRoutine = True
                         break  # at least one component has not yet finished
                 
-                ##### 4.  refresh the screen #####
+                ##### 5.  refresh the screen #####
                 if continueRoutine:  # don't flip if this routine is over or we'll get a blank screen
                     win.flip()
             
@@ -322,6 +358,10 @@ try:
                 if hasattr(thisComponent, "setAutoDraw"):
                     thisComponent.setAutoDraw(False)
             beat_stim.stop()  # ensure sound has stopped at end of routine
+
+            win.flip()
+            drum_pad.close()
+            core.wait(probe_delay) 
 
             ####====Probe====####
             # 3.  display probe text e.g. "The boy helped the girl?" #####
@@ -343,11 +383,11 @@ try:
                     probe_resp.keys = theseKeys[-1]  # just the last key pressed
                     probe_resp.rt = probe_resp.clock.getTime()
                     # was this 'correct'?
-                    if probe_resp.keys == 'y' and validity == 'True':
+                    if probe_resp.keys == 'y' and (validity == 'True' and trial_type == 'main'):
                         probe_resp.corr = 1
                         feedback.setText("correct")
                         feedback.draw()
-                    elif probe_resp.keys == 'n' and validity == 'False':
+                    elif probe_resp.keys == 'n' and (validity == 'False' or trial_type == 'catch'):
                         probe_resp.corr = 1
                         feedback.setText("correct")
                         feedback.draw()
@@ -359,6 +399,7 @@ try:
                         probe_resp.corr = 0
                         feedback.setText("incorrect")
                         feedback.draw()
+
                     #======WRITE DATA TO FILE======#    
                     log_file.write('\t'.join([str(trial_num),
                                 str(beat_type),
@@ -374,6 +415,18 @@ try:
                                 str(trial_type)]) + '\n')
                     
                     log_file.flush()
+
+                    with open('data/{}tapping_log.txt'.format(expInfo['participant']), 'a') as tap_file:
+                        for tap in tap_data:
+                            tap_file.write('\t'.join([str(trial_num),
+                                    str(beat_type),
+                                    str(stim),
+                                    str(congruency),
+                                    str(structure),
+                                    str(probe_resp.corr),
+                                    str(tap[0][0]),
+                                    str(tap[0][1] - start_time)]) + '\n')
+                    tap_file.close()
                     
                     probe_text.setAutoDraw(False)
                     thing = False
@@ -478,5 +531,6 @@ try:
     win.flip()
     core.wait(5)
 finally:
+    pygame.midi.quit()
     win.close()
     core.quit()

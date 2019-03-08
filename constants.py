@@ -17,15 +17,19 @@ FGC = (1, 1, 1) #white
 BGC = (0, 0, 0) #grey
 TEXTSIZE = 62 #text size for stim (not instructions)
 TEXTCORDS = (0, 0) #Centre of screen
-beat_freq = .4 #1/3  #0.417 #2.4Hz
+beat_freq = .4 
 frameInterval = 0.0166667 #framerate.... CHECK THIS
-sound_delay = .08 # 0.003 for processing command + .102 for soundcard/driver processing and sound coming out of earphones
+sound_delay = .07 # measured for BM339 computers i.e. ~70ms delay from sending request to sound coming out. 
 trial_duration = 10 # seconds
-probe_duration = 5 # seconds
+probe_duration = 5 # seconds ... i.e. the threshold before 'too slow message'
+probe_delay = 1 # seconds
 
-trials_per_condition = 24
+break_frequency = 50 # trials
+break_duration = 15 # seconds
 
-assort_trials = 8
+trials_per_condition = 16
+
+assort_trials = 16
 
 _thisDir = os.path.abspath(os.path.dirname(__file__)) #change to local directory
 os.chdir(_thisDir)
@@ -52,38 +56,45 @@ bottom_text = fun.instImport('Stimuli/Instructions/bottom_text.txt')
 
 ###===STIMULI===###
 # '+ * +' trials
-ptp_cong = fun.equationMaker('congruent', 'binary', '+*+',trials_per_condition, permutations)
-ptp_incong = fun.equationMaker('incongruent', 'binary', '+*+',trials_per_condition, permutations)
-ptp_cong2 = fun.equationMaker('congruent', 'binary2', '+*+',trials_per_condition, permutations)
-ptp_incong2 = fun.equationMaker('incongruent', 'binary2', '+*+',trials_per_condition, permutations)
-ptp_neut = fun.equationMaker('neutral', 'nonaccent', '+*+',trials_per_condition, permutations)
+ptp_cong        = fun.equationMaker('congruent', 'binary', '+*+',trials_per_condition, permutations)
+ptp_incong      = fun.equationMaker('incongruent', 'binary', '+*+',trials_per_condition, permutations)
+ptp_cong2       = fun.equationMaker('congruent', 'binary2', '+*+',trials_per_condition, permutations)
+ptp_incong2     = fun.equationMaker('incongruent', 'binary2', '+*+',trials_per_condition, permutations)
+#ptp_neut        = fun.equationMaker('neutral', 'nonaccent', '+*+',trials_per_condition, permutations)
 
 # '* + *' trials
-tpt_cong = fun.equationMaker('congruent', 'binary', '*+*',trials_per_condition, permutations)
-tpt_incong = fun.equationMaker('incongruent', 'binary', '*+*',trials_per_condition, permutations)
-tpt_cong2 = fun.equationMaker('congruent', 'binary2', '*+*',trials_per_condition, permutations)
-tpt_incong2 = fun.equationMaker('incongruent', 'binary2', '*+*',trials_per_condition, permutations)
-tpt_neut = fun.equationMaker('neutral', 'nonaccent', '*+*',trials_per_condition, permutations)
+tpt_cong        = fun.equationMaker('congruent', 'binary', '*+*',trials_per_condition, permutations)
+tpt_incong      = fun.equationMaker('incongruent', 'binary', '*+*',trials_per_condition, permutations)
+tpt_cong2       = fun.equationMaker('congruent', 'binary2', '*+*',trials_per_condition, permutations)
+tpt_incong2     = fun.equationMaker('incongruent', 'binary2', '*+*',trials_per_condition, permutations)
+#tpt_neut        = fun.equationMaker('neutral', 'nonaccent', '*+*',trials_per_condition, permutations)
+
+# '+ + +' trials 
+ppp_cong        = fun.equationMaker('congruent', 'binary', '+++',trials_per_condition, permutations) 
+ppp_incong      = fun.equationMaker('incongruent', 'binary', '+++',trials_per_condition, permutations) 
+ppp_cong2       = fun.equationMaker('congruent', 'binary2', '+++',trials_per_condition, permutations) 
+ppp_incong2     = fun.equationMaker('incongruent', 'binary2', '+++',trials_per_condition, permutations)
 
 # catch trials
-cat_ptp_cong = fun.equationMaker('congruent', 'binary', '+*+',assort_trials, permutations, catch = True)
-cat_ptp_incong = fun.equationMaker('incongruent', 'binary', '+*+',assort_trials, permutations, catch = True)
-cat_ptp_cong2 = fun.equationMaker('congruent', 'binary2', '+*+',assort_trials, permutations, catch = True)
+cat_ptp_cong    = fun.equationMaker('congruent', 'binary', '+*+',assort_trials, permutations, catch = True)
+cat_ptp_incong  = fun.equationMaker('incongruent', 'binary', '+*+',assort_trials, permutations, catch = True)
+cat_ptp_cong2   = fun.equationMaker('congruent', 'binary2', '+*+',assort_trials, permutations, catch = True)
 cat_ptp_incong2 = fun.equationMaker('incongruent', 'binary2', '+*+',assort_trials, permutations, catch = True)
-cat_ptp_neut = fun.equationMaker('neutral', 'nonaccent', '+*+',assort_trials, permutations, catch = True)
+#cat_ptp_neut    = fun.equationMaker('neutral', 'nonaccent', '+*+',assort_trials, permutations, catch = True)
 
 # catch
-cat_tpt_cong = fun.equationMaker('congruent', 'binary', '*+*',assort_trials, permutations, catch = True)
-cat_tpt_incong = fun.equationMaker('incongruent', 'binary', '*+*',assort_trials, permutations, catch = True)
-cat_tpt_cong2 = fun.equationMaker('congruent', 'binary2', '*+*',assort_trials, permutations, catch = True)
+cat_tpt_cong    = fun.equationMaker('congruent', 'binary', '*+*',assort_trials, permutations, catch = True)
+cat_tpt_incong  = fun.equationMaker('incongruent', 'binary', '*+*',assort_trials, permutations, catch = True)
+cat_tpt_cong2   = fun.equationMaker('congruent', 'binary2', '*+*',assort_trials, permutations, catch = True)
 cat_tpt_incong2 = fun.equationMaker('incongruent', 'binary2', '*+*',assort_trials, permutations, catch = True)
-cat_tpt_neut = fun.equationMaker('neutral', 'nonaccent', '*+*',assort_trials, permutations, catch = True)
+#cat_tpt_neut    = fun.equationMaker('neutral', 'nonaccent', '*+*',assort_trials, permutations, catch = True)
 
-# assorted '* * +' trials 
-ttp_cong = fun.equationMaker('congruent', 'binary', '**+',assort_trials, permutations) #8
-ttp_incong = fun.equationMaker('incongruent', 'binary', '**+',assort_trials, permutations) #16
-ttp_cong2 = fun.equationMaker('congruent', 'binary2', '**+',assort_trials, permutations) # 24
-ttp_incong2 = fun.equationMaker('incongruent', 'binary2', '**+',assort_trials, permutations) # 32
+# CATCH '+ + +' trials 
+cat_ppp_cong    = fun.equationMaker('congruent', 'binary', '+++',assort_trials, permutations, catch = True) 
+cat_ppp_incong  = fun.equationMaker('incongruent', 'binary', '+++',assort_trials, permutations, catch = True) 
+cat_ppp_cong2   = fun.equationMaker('congruent', 'binary2', '+++',assort_trials, permutations, catch = True) 
+cat_ppp_incong2 = fun.equationMaker('incongruent', 'binary2', '+++',assort_trials, permutations, catch = True)
+
 """
 # assorted '* + /' trials 
 tpd_cong = fun.equationMaker('congruent', 'binary', '*+/',assort_trials, permutations) #8

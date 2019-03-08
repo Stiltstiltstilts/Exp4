@@ -43,6 +43,7 @@ def equationMaker(congruency=None, beat_type=None, structure=None, n=None, perms
     alphabet = [letter for letter in alphabet if letter not in letters_to_remove] # final letter list
 
     op = list(structure) # list of operands
+    #op = [x if x != "*" else "times" for x in op] # use this line for experimenting with speech stims
 
     eq_per_perm = int(n / len(perms)) # number of equations per permutation
     #assert eq_per_perm.is_integer(), "length of perms must be evenly divisble into n"
@@ -53,6 +54,7 @@ def equationMaker(congruency=None, beat_type=None, structure=None, n=None, perms
     for eq in range(n):
         l = list(choice(alphabet, size=5, replace=False))
         equation = [l[0],op[0],l[1],op[1],l[2],op[2],l[3]] 
+        
         p = itemgetter(*perms[eq][0])(l) # creates permutation of letter ordering for this iteration
         probe = [p[0],op[0],p[1],op[1],p[2],op[2],p[3]] 
         if catch:
@@ -63,7 +65,7 @@ def equationMaker(congruency=None, beat_type=None, structure=None, n=None, perms
             trial_type = 'main'
         probe = ' '.join(probe)
 
-        #add info on 'pos' and 'sensitivity' based on permutation used
+        # add info on 'validity' and 'sensitivity' based on permutation used
         if perms[eq][1] <= 4:
             sensitivity = 'insensitive'
         else:
@@ -79,12 +81,12 @@ def equationMaker(congruency=None, beat_type=None, structure=None, n=None, perms
                 validity = 'True'
             else:
                 validity = 'False'
-        elif structure == '**+':
-            sensitivity = 'assorted'
-            if ( (perms[eq][1] == 3) or (perms[eq][1] == 5 or perms[eq][1] == 1) ):
-                validity = 'True'
-            else:
+        elif structure == '+++':
+            sensitivity = 'neutral'
+            if catch:
                 validity = 'False'
+            else:
+                validity = 'True'
 
         # assemble trial dictionary
         trial_dict = {'stim':equation, 'beat_type':beat_type, 
