@@ -216,222 +216,223 @@ try:
                         'timestamp' + '\n')
     tap_file.close()
 
-        trial_num = 0
+    trial_num = 0
 
-        # ===== TRIALS ====== #
-        for thisTrial in all_trials:  
-            drum_pad = pygame.midi.Input(pygame.midi.get_default_input_id())
-            trial_num += 1
+    # ===== TRIALS ====== #
+    for thisTrial in all_trials:  
+        drum_pad = pygame.midi.Input(pygame.midi.get_default_input_id())
+        trial_num += 1
 
-            # Check for break trial
-            if trial_num % break_frequency == 0:
-                break_text.draw()
-                win.flip()
-                core.wait(break_duration)
-
-                ####====Space to continue====####
-                event.clearEvents(eventType='keyboard')
-                space_cont.draw()
-                win.flip()
-                thisKey = event.waitKeys(keyList=['space'])
-                while not 'space' in thisKey:
-                    thisKey = event.waitKeys(keyList=['space'])
-
-            ####====ABBREVIATE PARAMETER NAMES====####
-            if thisTrial != None:
-                for paramName in thisTrial:
-                    exec('{} = thisTrial[paramName]'.format(paramName))
-            
-            probe_resp = event.BuilderKeyResponse()
-
-            ####====SETUP TRIAL COMPONENTS LIST====####
-            # initialize trial components list
-            trialComponents = []
-            # add auditory stimuli component
-            if (beat_type == 'binary' and congruency == 'congruent'):
-                beat_stim   = binary_beat
-                word_offset = 8 * beat_freq
-            elif (beat_type == 'binary' and congruency == 'incongruent'):
-                beat_stim   = binary_beat
-                word_offset = 7 * beat_freq
-            elif (beat_type == 'unaccented' and congruency == 'congruent'):
-                beat_stim   = unaccented_beat
-                word_offset = 8 * beat_freq
-            
-            if structure == '+*+':
-                if (beat_type == 'binary2' and congruency == 'congruent'):
-                    beat_stim   = binary2_beat
-                    word_offset = 12 * beat_freq
-                elif (beat_type == 'binary2' and congruency == 'incongruent'):
-                    beat_stim   = binary2_beat
-                    word_offset = 10 * beat_freq
-            elif structure == '*+*':
-                if (beat_type == 'binary2' and congruency == 'congruent'):
-                    beat_stim   = binary2_beat
-                    word_offset = 10 * beat_freq
-                elif (beat_type == 'binary2' and congruency == 'incongruent'):
-                    beat_stim   = binary2_beat
-                    word_offset = 12 * beat_freq
-            elif structure == '+++':
-                if (beat_type == 'binary2' and congruency == 'congruent'):
-                    beat_stim   = binary2_beat
-                    word_offset = 10 * beat_freq
-                elif (beat_type == 'binary2' and congruency == 'incongruent'):
-                    beat_stim   = binary2_beat
-                    word_offset = 12 * beat_freq
-
-            trialComponents.extend([beat_stim]) # add beat stim to trialComponents list
-
-            # add text stimuli components
-            for i in range(len(stim)): # for i in range(len(trial['sent_stim'])):
-                exec('trialComponents.extend([{}])'.format('word' + '_' + str(i+1)))
-                word_stim_list[i].setText(stim[i])
-            
-            # set probe text for the trial
-            probe_text.setText(probe)
-
-            ####====BASIC ROUTINE CHECKS====####
-            continueRoutine = True
-            # keep track of which components have finished
-            for thisComponent in trialComponents:
-                if hasattr(thisComponent, 'status'):
-                    thisComponent.status = NOT_STARTED
-
-            # display trial structure
-            trial_text.setText(structure)
-            trial_text.draw()
+        # Check for break trial
+        if trial_num % break_frequency == 0:
+            break_text.draw()
             win.flip()
-            core.wait(.5)
+            core.wait(break_duration)
 
-            t = 0
-            frameN = -1
-            beatDuration = len(stim)*beat_freq + word_offset
-            trialClock.reset()  # clock
-
-            ####====START MAIN TRIAL ROUTINE====####
-            while continueRoutine: 
-                # get current time
-                t = trialClock.getTime()
-                frameN = frameN + 1  # number of completed frames (so 0 is the first frame)
-                ##### 1. start/stop beat_stim  #####
-                if t >= 0.0 + sound_delay and beat_stim.status == NOT_STARTED:
-                    # keep track of start time/frame for later
-                    beat_stim.tStart = t
-                    beat_stim.frameNStart = frameN  # exact frame index
-                    start_time = pygame.midi.time() # keep track of sound start time to adjust taps later
-                    beat_stim.play()  # start the sound (it finishes automatically)
-                    fixation.setAutoDraw(True)
-                if beat_stim.status == STARTED and t >= beatDuration:
-                    beat_stim.stop()
-
-                ##### 2. check for midi input  #####
-                if drum_pad.poll():
-                    tap_data.append(drum_pad.read(1))
-
-                ##### 3.  iterate through sentence text stimuli #####   
-                for word_index in range(len(stim)):
-                    if t >= word_index * beat_freq + word_offset and word_stim_list[word_index].status == NOT_STARTED:
-                        fixation.setAutoDraw(False)
-                        # keep track of start time/frame for later
-                        word_stim_list[word_index].tStart = t
-                        word_stim_list[word_index].frameNStart = frameN  # exact frame index
-                        word_stim_list[word_index].setAutoDraw(True)
-                    frameRemains = (beat_freq * word_index) + beat_freq + word_offset - win.monitorFramePeriod * 0.75  # most of one frame period left
-                    if word_stim_list[word_index].status == STARTED and t >= frameRemains:
-                        word_stim_list[word_index].setAutoDraw(False)
-
-                ##### 4.  check if all components have finished #####
-                if not continueRoutine:  # a component has requested a forced-end of Routine
-                    break
-                continueRoutine = False  # will revert to True if at least one component still running
-                for thisComponent in trialComponents:
-                    if hasattr(thisComponent, "status") and thisComponent.status != FINISHED:
-                        continueRoutine = True
-                        break  # at least one component has not yet finished
-                
-                ##### 5.  refresh the screen #####
-                if continueRoutine:  # don't flip if this routine is over or we'll get a blank screen
-                    win.flip()
-            
-            ####====Ending Trial Routine====####
-            for thisComponent in trialComponents:
-                if hasattr(thisComponent, "setAutoDraw"):
-                    thisComponent.setAutoDraw(False)
-            beat_stim.stop()  # ensure sound has stopped at end of routine
-
-            win.flip()
-            drum_pad.close()
-            core.wait(probe_delay) 
-
-            ####====Probe====####
-            # 3.  display probe text e.g. "The boy helped the girl?" #####
-            probe_text.tStart = t
-            probe_text.setAutoDraw(True)
-            response_keys.setAutoDraw(True)
-
-            ####====check for response====##### 
-            probe_resp.tStart = t
-            win.callOnFlip(probe_resp.clock.reset)  # t=0 on next screen flip
+            ####====Space to continue====####
             event.clearEvents(eventType='keyboard')
-            thing = True
-            while thing: 
-                win.flip()
-                theseKeys = event.getKeys(keyList=['y', 'n', 'd'])
-                if len(theseKeys) > 0:  # at least one key was pressed
-                    probe_text.setAutoDraw(False)
-                    response_keys.setAutoDraw(False)
-                    probe_resp.keys = theseKeys[-1]  # just the last key pressed
-                    probe_resp.rt = probe_resp.clock.getTime()
-                    # was this 'correct'?
-                    if probe_resp.keys == 'y' and (validity == 'True' and trial_type == 'main'):
-                        probe_resp.corr = 1
-                        feedback.setText("correct")
-                        feedback.draw()
-                    elif probe_resp.keys == 'n' and (validity == 'False' or trial_type == 'catch'):
-                        probe_resp.corr = 1
-                        feedback.setText("correct")
-                        feedback.draw()
-                    elif probe_resp.keys == 'd':
-                        probe_resp.corr = 0
-                        feedback.setText("(don't know)")
-                        feedback.draw()
-                    else:
-                        probe_resp.corr = 0
-                        feedback.setText("incorrect")
-                        feedback.draw()
+            space_cont.draw()
+            win.flip()
+            thisKey = event.waitKeys(keyList=['space'])
+            while not 'space' in thisKey:
+                thisKey = event.waitKeys(keyList=['space'])
 
-                    #======WRITE DATA TO FILE======#    
+        ####====ABBREVIATE PARAMETER NAMES====####
+        if thisTrial != None:
+            for paramName in thisTrial:
+                exec('{} = thisTrial[paramName]'.format(paramName))
+        
+        probe_resp = event.BuilderKeyResponse()
+
+        ####====SETUP TRIAL COMPONENTS LIST====####
+        # initialize trial components list
+        trialComponents = []
+        # add auditory stimuli component
+        if (beat_type == 'binary' and congruency == 'congruent'):
+            beat_stim   = binary_beat
+            word_offset = 8 * beat_freq
+        elif (beat_type == 'binary' and congruency == 'incongruent'):
+            beat_stim   = binary_beat
+            word_offset = 7 * beat_freq
+        elif (beat_type == 'unaccented' and congruency == 'congruent'):
+            beat_stim   = unaccented_beat
+            word_offset = 8 * beat_freq
+        
+        if structure == '+*+':
+            if (beat_type == 'binary2' and congruency == 'congruent'):
+                beat_stim   = binary2_beat
+                word_offset = 12 * beat_freq
+            elif (beat_type == 'binary2' and congruency == 'incongruent'):
+                beat_stim   = binary2_beat
+                word_offset = 10 * beat_freq
+        elif structure == '*+*':
+            if (beat_type == 'binary2' and congruency == 'congruent'):
+                beat_stim   = binary2_beat
+                word_offset = 10 * beat_freq
+            elif (beat_type == 'binary2' and congruency == 'incongruent'):
+                beat_stim   = binary2_beat
+                word_offset = 12 * beat_freq
+        elif structure == '+++':
+            if (beat_type == 'binary2' and congruency == 'congruent'):
+                beat_stim   = binary2_beat
+                word_offset = 10 * beat_freq
+            elif (beat_type == 'binary2' and congruency == 'incongruent'):
+                beat_stim   = binary2_beat
+                word_offset = 12 * beat_freq
+
+        trialComponents.extend([beat_stim]) # add beat stim to trialComponents list
+
+        # add text stimuli components
+        for i in range(len(stim)): # for i in range(len(trial['sent_stim'])):
+            exec('trialComponents.extend([{}])'.format('word' + '_' + str(i+1)))
+            word_stim_list[i].setText(stim[i])
+        
+        # set probe text for the trial
+        probe_text.setText(probe)
+
+        ####====BASIC ROUTINE CHECKS====####
+        continueRoutine = True
+        # keep track of which components have finished
+        for thisComponent in trialComponents:
+            if hasattr(thisComponent, 'status'):
+                thisComponent.status = NOT_STARTED
+
+        # display trial structure
+        trial_text.setText(structure)
+        trial_text.draw()
+        win.flip()
+        core.wait(.5)
+
+        t = 0
+        frameN = -1
+        beatDuration = len(stim)*beat_freq + word_offset
+        trialClock.reset()  # clock
+
+        ####====START MAIN TRIAL ROUTINE====####
+        while continueRoutine: 
+            # get current time
+            t = trialClock.getTime()
+            frameN = frameN + 1  # number of completed frames (so 0 is the first frame)
+            ##### 1. start/stop beat_stim  #####
+            if t >= 0.0 + sound_delay and beat_stim.status == NOT_STARTED:
+                # keep track of start time/frame for later
+                beat_stim.tStart = t
+                beat_stim.frameNStart = frameN  # exact frame index
+                start_time = pygame.midi.time() # keep track of sound start time to adjust taps later
+                beat_stim.play()  # start the sound (it finishes automatically)
+                fixation.setAutoDraw(True)
+            if beat_stim.status == STARTED and t >= beatDuration:
+                beat_stim.stop()
+
+            ##### 2. check for midi input  #####
+            if drum_pad.poll():
+                tap_data.append(drum_pad.read(1))
+
+            ##### 3.  iterate through sentence text stimuli #####   
+            for word_index in range(len(stim)):
+                if t >= word_index * beat_freq + word_offset and word_stim_list[word_index].status == NOT_STARTED:
+                    fixation.setAutoDraw(False)
+                    # keep track of start time/frame for later
+                    word_stim_list[word_index].tStart = t
+                    word_stim_list[word_index].frameNStart = frameN  # exact frame index
+                    word_stim_list[word_index].setAutoDraw(True)
+                frameRemains = (beat_freq * word_index) + beat_freq + word_offset - win.monitorFramePeriod * 0.75  # most of one frame period left
+                if word_stim_list[word_index].status == STARTED and t >= frameRemains:
+                    word_stim_list[word_index].setAutoDraw(False)
+
+            ##### 4.  check if all components have finished #####
+            if not continueRoutine:  # a component has requested a forced-end of Routine
+                break
+            continueRoutine = False  # will revert to True if at least one component still running
+            for thisComponent in trialComponents:
+                if hasattr(thisComponent, "status") and thisComponent.status != FINISHED:
+                    continueRoutine = True
+                    break  # at least one component has not yet finished
+            
+            ##### 5.  refresh the screen #####
+            if continueRoutine:  # don't flip if this routine is over or we'll get a blank screen
+                win.flip()
+        
+        ####====Ending Trial Routine====####
+        for thisComponent in trialComponents:
+            if hasattr(thisComponent, "setAutoDraw"):
+                thisComponent.setAutoDraw(False)
+        beat_stim.stop()  # ensure sound has stopped at end of routine
+
+        win.flip()
+        drum_pad.close()
+        core.wait(probe_delay) 
+
+        ####====Probe====####
+        # 3.  display probe text e.g. "The boy helped the girl?" #####
+        probe_text.tStart = t
+        probe_text.setAutoDraw(True)
+        response_keys.setAutoDraw(True)
+
+        ####====check for response====##### 
+        probe_resp.tStart = t
+        win.callOnFlip(probe_resp.clock.reset)  # t=0 on next screen flip
+        event.clearEvents(eventType='keyboard')
+        thing = True
+        while thing: 
+            win.flip()
+            theseKeys = event.getKeys(keyList=['y', 'n', 'd'])
+            if len(theseKeys) > 0:  # at least one key was pressed
+                probe_text.setAutoDraw(False)
+                response_keys.setAutoDraw(False)
+                probe_resp.keys = theseKeys[-1]  # just the last key pressed
+                probe_resp.rt = probe_resp.clock.getTime()
+                # was this 'correct'?
+                if probe_resp.keys == 'y' and (validity == 'True' and trial_type == 'main'):
+                    probe_resp.corr = 1
+                    feedback.setText("correct")
+                    feedback.draw()
+                elif probe_resp.keys == 'n' and (validity == 'False' or trial_type == 'catch'):
+                    probe_resp.corr = 1
+                    feedback.setText("correct")
+                    feedback.draw()
+                elif probe_resp.keys == 'd':
+                    probe_resp.corr = 0
+                    feedback.setText("(don't know)")
+                    feedback.draw()
+                else:
+                    probe_resp.corr = 0
+                    feedback.setText("incorrect")
+                    feedback.draw()
+
+                #======WRITE DATA TO FILE======#    
+                with open('data/{}trial_log.txt'.format(expInfo['participant']), 'a') as log_file:
                     log_file.write('\t'.join([str(trial_num),
+                            str(beat_type),
+                            str(stim),
+                            str(structure),
+                            str(congruency),
+                            str(validity),
+                            str(sensitivity),
+                            str(probe),
+                            str(probe_resp.keys),
+                            str(probe_resp.corr),
+                            str(probe_resp.rt),
+                            str(trial_type)]) + '\n')
+                
+                log_file.flush()
+
+                with open('data/{}tapping_log.txt'.format(expInfo['participant']), 'a') as tap_file:
+                    for tap in tap_data:
+                        tap_file.write('\t'.join([str(trial_num),
                                 str(beat_type),
                                 str(stim),
-                                str(structure),
                                 str(congruency),
-                                str(validity),
-                                str(sensitivity),
-                                str(probe),
-                                str(probe_resp.keys),
+                                str(structure),
                                 str(probe_resp.corr),
-                                str(probe_resp.rt),
-                                str(trial_type)]) + '\n')
-                    
-                    log_file.flush()
-
-                    with open('data/{}tapping_log.txt'.format(expInfo['participant']), 'a') as tap_file:
-                        for tap in tap_data:
-                            tap_file.write('\t'.join([str(trial_num),
-                                    str(beat_type),
-                                    str(stim),
-                                    str(congruency),
-                                    str(structure),
-                                    str(probe_resp.corr),
-                                    str(tap[0][0]),
-                                    str(tap[0][1] - start_time)]) + '\n')
-                    tap_file.close()
-                    
-                    probe_text.setAutoDraw(False)
-                    thing = False
+                                str(tap[0][0]),
+                                str(tap[0][1] - start_time)]) + '\n')
+                tap_file.close()
+                
+                probe_text.setAutoDraw(False)
+                thing = False
             win.flip()
-            core.wait(1)
+            core.wait(.5)
 
             ####====Check if response is too slow====####
             if probe_resp.rt > probe_duration:
